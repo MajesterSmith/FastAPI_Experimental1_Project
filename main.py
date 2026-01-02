@@ -5,10 +5,22 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy import create_engine, Column, Integer, String, Float, Boolean, Date, ForeignKey
 from sqlalchemy.orm import sessionmaker, Session, relationship, declarative_base
 from passlib.context import CryptContext
+from jose import JWTError, jwt
+from datetime import datetime, timedelta
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# Settings for JWT
+SECRET_KEY = os.getenv("SECRET_KEY", "optional-fallback-for-local-dev")
+SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./default.db")
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 # --- DATABASE ---
 SQLALCHEMY_DATABASE_URL = "sqlite:///./employee_app.db"
-engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
+eengine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
@@ -40,6 +52,25 @@ class Attendance(Base):
     employee = relationship("Employee", back_populates="attendance")
 
 Base.metadata.create_all(bind=engine)
+
+def create_access_token(data: dict):
+    to_encode = data.copy()
+    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+def get_current_user(request: Request, db: Session):
+    token = request.cookies.get("access_token")
+    if not token:
+        return None
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        email: str = payload.get("sub")
+        if email is None:
+            return None
+        return db.query(Employee).filter(Employee.email == email).first()
+    except JWTError:
+        return None
 
 # --- APP SETUP ---
 app = FastAPI()
@@ -88,14 +119,17 @@ async def login(email: str = Form(...), password: str = Form(...), db: Session =
     user = db.query(Employee).filter(Employee.email == email).first()
     if not user or not pwd_context.verify(password, user.hashed_password):
         return RedirectResponse(url="/?error=1", status_code=302)
+    
+    access_token = create_access_token(data={"sub": user.email})
+    
     response = RedirectResponse(url="/dashboard", status_code=302)
-    response.set_cookie(key="user_id", value=str(user.id))
+    response.set_cookie(key="access_token", value=access_token, httponly=True)
     return response
 
 @app.get("/logout")
 async def logout():
     res = RedirectResponse(url="/")
-    res.delete_cookie("user_id")
+    res.delete_cookie("access_token")
     return res
 
 @app.get("/dashboard")

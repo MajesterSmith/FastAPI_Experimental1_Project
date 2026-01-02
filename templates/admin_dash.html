@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="row mb-4 g-3">
+    <div class="col-md-6">
+        <div class="card p-3 h-100">
+            <h5 class="fw-bold mb-3">Manage Departments</h5>
+            <form action="/admin/add-dept" method="post" class="d-flex gap-2 mb-3">
+                <input type="text" name="name" class="form-control" placeholder="New Dept Name" required>
+                <button type="submit" class="btn btn-dark">Create</button>
+            </form>
+            <div class="list-group list-group-flush" style="max-height: 150px; overflow-y: auto;">
+                {% for dept in departments %}
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>{{ dept.name }}</span>
+                    <button class="btn btn-sm btn-outline-secondary border-0" data-bs-toggle="modal" data-bs-target="#editDept{{ dept.id }}">Rename</button>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 text-end d-flex align-items-end justify-content-end">
+        <button class="btn btn-success btn-lg shadow" data-bs-toggle="modal" data-bs-target="#addEmpModal">+ Add New Employee</button>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header bg-white py-3"><h5 class="fw-bold m-0">Employee Directory</h5></div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Dept</th>
+                    <th>Salary</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for emp in employees %}
+                <tr>
+                    <td><strong>{{ emp.name }}</strong></td>
+                    <td>{{ emp.email }}</td>
+                    <td><span class="badge bg-secondary">{{ emp.department.name }}</span></td>
+                    <td>${{ "{:,.2f}".format(emp.salary) }}</td>
+                    <td>
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editEmp{{ emp.id }}">Edit</button>
+                            <a href="/admin/del-emp/{{ emp.id }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete employee?')">Del</a>
+                        </div>
+                        
+                        <form action="/admin/move-emp" method="post" class="d-inline-block ms-1">
+                            <input type="hidden" name="emp_id" value="{{ emp.id }}">
+                            <select name="dept_id" class="form-select form-select-sm" onchange="this.form.submit()">
+                                <option disabled selected>Move...</option>
+                                {% for d in departments %}<option value="{{ d.id }}">{{ d.name }}</option>{% endfor %}
+                            </select>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header bg-white py-3"><h5 class="fw-bold m-0">Attendance History</h5></div>
+    <div style="max-height: 300px; overflow-y: auto;">
+        <table class="table table-sm table-striped">
+            <thead class="sticky-top bg-white">
+                <tr><th>Date</th><th>Employee</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr><td>{{ log.date }}</td><td>{{ log.employee.name }}</td><td><span class="text-success">● Present</span></td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal fade" id="addEmpModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <form action="/admin/add-emp" method="post" class="modal-content">
+      <div class="modal-header border-0"><h5>Create New Staff Account</h5></div>
+      <div class="modal-body">
+        <input type="text" name="name" class="form-control mb-2" placeholder="Full Name" required>
+        <input type="email" name="email" class="form-control mb-2" placeholder="Email" required>
+        <input type="number" step="0.01" name="salary" class="form-control mb-2" placeholder="Salary" required>
+        <select name="dept_id" class="form-select mb-2" required>
+            <option disabled selected>Select Department</option>
+            {% for d in departments %}<option value="{{ d.id }}">{{ d.name }}</option>{% endfor %}
+        </select>
+        <small class="text-muted">Default password: <b>password123</b></small>
+      </div>
+      <div class="modal-footer border-0">
+        <button type="submit" class="btn btn-success">Register Employee</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% for emp in employees %}
+<div class="modal fade" id="editEmp{{ emp.id }}" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <form action="/admin/edit-emp" method="post" class="modal-content">
+      <div class="modal-header border-0"><h5>Update {{ emp.name }}</h5></div>
+      <div class="modal-body">
+        <input type="hidden" name="emp_id" value="{{ emp.id }}">
+        <div class="mb-2"><label class="small">Name</label><input type="text" name="name" class="form-control" value="{{ emp.name }}"></div>
+        <div class="mb-2"><label class="small">Email</label><input type="email" name="email" class="form-control" value="{{ emp.email }}"></div>
+        <div class="mb-2"><label class="small">Salary</label><input type="number" step="0.01" name="salary" class="form-control" value="{{ emp.salary }}"></div>
+      </div>
+      <div class="modal-footer border-0">
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endfor %}
+
+{% for dept in departments %}
+<div class="modal fade" id="editDept{{ dept.id }}" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-sm">
+    <form action="/admin/edit-dept" method="post" class="modal-content">
+      <div class="modal-body">
+        <input type="hidden" name="dept_id" value="{{ dept.id }}">
+        <label class="form-label small">New Name</label>
+        <input type="text" name="name" class="form-control" value="{{ dept.name }}" required>
+      </div>
+      <div class="modal-footer border-0">
+        <button type="submit" class="btn btn-primary btn-sm">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endfor %}
+
+{% endblock %}

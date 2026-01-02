@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row">
+    <div class="col-md-6 mx-auto">
+        <div class="card text-center p-5">
+            <h2 class="fw-bold mb-3">Hello, {{ user.name }}</h2>
+            <p class="text-muted">Current Date: <strong>{{ today }}</strong></p>
+            
+            {% if marked %}
+            <div class="alert alert-success border-0 py-3">
+                <h5 class="m-0">✅ Your attendance is marked for today.</h5>
+            </div>
+            {% else %}
+            <form action="/mark-attendance" method="post">
+                <button type="submit" class="btn btn-primary btn-lg px-5 shadow">Mark Present Today</button>
+            </form>
+            {% endif %}
+
+            <div class="mt-5 pt-4 border-top">
+                <h6>Security Settings</h6>
+                <button class="btn btn-link btn-sm text-decoration-none" type="button" data-bs-toggle="collapse" data-bs-target="#passCollapse">
+                    Change Password
+                </button>
+                <div class="collapse mt-3" id="passCollapse">
+                    <form action="/change-password" method="post" class="card card-body bg-light border-0">
+                        <input type="password" name="new_pwd" class="form-control mb-2" placeholder="Enter New Password" required>
+                        <button type="submit" class="btn btn-dark btn-sm">Update Password</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -6,6 +6,7 @@ from sqlalchemy import create_engine, Column, Integer, String, Float, Boolean, D
 from sqlalchemy.orm import sessionmaker, Session, relationship, declarative_base
 from passlib.context import CryptContext
 from jose import JWTError, jwt
+from sqlalchemy.sql import func
 from datetime import datetime, timedelta
 import os
 from dotenv import load_dotenv
@@ -20,7 +21,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 # --- DATABASE ---
 SQLALCHEMY_DATABASE_URL = "sqlite:///./employee_app.db"
-eengine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
+engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
@@ -46,7 +47,7 @@ class Employee(Base):
 class Attendance(Base):
     __tablename__ = "attendance"
     id = Column(Integer, primary_key=True, index=True)
-    date = Column(Date, default=datetime.date.today)
+    date = Column(Date, default=func.now())
     is_present = Column(Boolean, default=True)
     emp_id = Column(Integer, ForeignKey("employees.id"))
     employee = relationship("Employee", back_populates="attendance")

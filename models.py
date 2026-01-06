@@ -24,11 +24,24 @@ class Employee(Base):
     department = relationship("Department", back_populates="employees")
     attendance = relationship("Attendance", back_populates="employee")
 
+    my_leaves = relationship("Leave", foreign_keys="Leave.emp_id", back_populates="requester")
+    managed_leaves = relationship("Leave", foreign_keys="Leave.admin_id", back_populates="approver")
+
 class Attendance(Base):
     __tablename__ = "attendance"
     id = Column(Integer, primary_key=True, index=True)
     date = Column(Date, default=func.now())
     is_present = Column(Boolean, default=True)
     emp_id = Column(Integer, ForeignKey("employees.id"))
-    
     employee = relationship("Employee", back_populates="attendance")
+
+class Leave(Base):
+    __tablename__ = "leave"
+    id = Column(Integer, primary_key = True, index = True)
+    approve = Column(Boolean, nullable = True)
+    emp_id = Column(Integer, ForeignKey("employees.id"))
+    admin_id = Column(Integer, ForeignKey("employees.id"), nullable = True)
+    date = Column(Date,default = func.now())
+
+    requester = relationship("Employee", foreign_keys=[emp_id], back_populates="my_leaves")
+    approver = relationship("Employee", foreign_keys=[admin_id], back_populates="managed_leaves")

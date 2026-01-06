@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, Form, Request, status
+from fastapi import FastAPI, Depends, Form, Request, status, HTTPException
 from fastapi.responses import RedirectResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
@@ -68,30 +68,28 @@ async def dashboard(request: Request, db: Session = Depends(get_db)):
             "user": user,
             "employees": db.query(models.Employee).all(),
             "departments": db.query(models.Department).all(),
-            "logs": db.query(models.Attendance).all()
+            "logs": db.query(models.Attendance).all(),
+            "pending_leaves": db.query(models.Leave).filter(models.Leave.approve == None).all()
         })
     
     marked = db.query(models.Attendance).filter(
         models.Attendance.emp_id == user.id, 
         models.Attendance.date == date.today()
     ).first()
+    
     return templates.TemplateResponse("employee_dash.html", {
-        "request": request, "user": user, "marked": marked, "today": date.today()
+        "request": request, 
+        "user": user, 
+        "marked": marked, 
+        "today": date.today(),
+        "my_leaves": db.query(models.Leave).filter(models.Leave.emp_id == user.id).all()
     })
 
-# --- ACTIONS ---
+# --- ADMIN ACTIONS (DEPT & EMP) ---
 @app.post("/admin/add-dept")
 async def add_dept(name: str = Form(...), db: Session = Depends(get_db)):
     db.add(models.Department(name=name))
     db.commit()
-    return RedirectResponse(url="/dashboard", status_code=302)
-
-@app.post("/admin/edit-dept")
-async def edit_dept(dept_id: int = Form(...), name: str = Form(...), db: Session = Depends(get_db)):
-    dept = db.query(models.Department).filter(models.Department.id == dept_id).first()
-    if dept:
-        dept.name = name
-        db.commit()
     return RedirectResponse(url="/dashboard", status_code=302)
 
 @app.post("/admin/add-emp")
@@ -104,28 +102,43 @@ async def add_emp(name: str = Form(...), email: str = Form(...), salary: float =
     db.commit()
     return RedirectResponse(url="/dashboard", status_code=302)
 
-@app.post("/admin/edit-emp")
-async def edit_emp(emp_id: int = Form(...), name: str = Form(...), email: str = Form(...), salary: float = Form(...), db: Session = Depends(get_db)):
-    emp = db.query(models.Employee).filter(models.Employee.id == emp_id).first()
-    if emp:
-        emp.name, emp.email, emp.salary = name, email, salary
-        db.commit()
-    return RedirectResponse(url="/dashboard", status_code=302)
-
 @app.get("/admin/del-emp/{id}")
 async def del_emp(id: int, db: Session = Depends(get_db)):
     db.query(models.Employee).filter(models.Employee.id == id).delete()
     db.commit()
     return RedirectResponse(url="/dashboard", status_code=302)
 
-@app.post("/admin/move-emp")
-async def move_emp(emp_id: int = Form(...), dept_id: int = Form(...), db: Session = Depends(get_db)):
-    emp = db.query(models.Employee).filter(models.Employee.id == emp_id).first()
-    if emp:
-        emp.dept_id = dept_id
-        db.commit()
+# --- LEAVE SYSTEM ROUTES ---
+
+@app.post("/request-leave")
+async def request_leave(request: Request, leave_date: date = Form(...), db: Session = Depends(get_db)):
+    user = get_current_user(request, db)
+    if not user: return RedirectResponse(url="/")
+    
+    new_leave = models.Leave(
+        emp_id=user.id,
+        date=leave_date,
+        approve=None  # Explicitly set to None for 'Pending'
+    )
+    db.add(new_leave)
+    db.commit()
     return RedirectResponse(url="/dashboard", status_code=302)
 
+@app.post("/admin/approve-leave")
+async def approve_leave(request: Request, leave_id: int = Form(...), decision: str = Form(...), db: Session = Depends(get_db)):
+    admin = get_current_user(request, db)
+    if not admin or admin.role != "admin":
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    leave_req = db.query(models.Leave).filter(models.Leave.id == leave_id).first()
+    if leave_req:
+        leave_req.approve = True if decision == "approve" else False
+        leave_req.admin_id = admin.id
+        db.commit()
+        
+    return RedirectResponse(url="/dashboard", status_code=302)
+
+# --- ATTENDANCE & PROFILE ---
 @app.post("/mark-attendance")
 async def mark_attendance(request: Request, db: Session = Depends(get_db)):
     user = get_current_user(request, db)

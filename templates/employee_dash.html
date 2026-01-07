@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="row">
-    <div class="col-md-6 mx-auto">
-        <div class="card text-center p-5">
+    <div class="col-md-6">
+        <div class="card text-center p-5 h-100">
             <h2 class="fw-bold mb-3">Hello, {{ user.name }}</h2>
             <p class="text-muted">Current Date: <strong>{{ today }}</strong></p>
             
@@ -27,6 +27,37 @@
                         <button type="submit" class="btn btn-dark btn-sm">Update Password</button>
                     </form>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card p-4 h-100">
+            <h5 class="fw-bold">Request Leave</h5>
+            <form action="/request-leave" method="post" class="mb-4">
+                <div class="input-group">
+                    <input type="date" name="leave_date" class="form-control" required>
+                    <button type="submit" class="btn btn-warning">Submit Request</button>
+                </div>
+            </form>
+
+            <h6 class="fw-bold mt-3">My Leave Status</h6>
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead><tr><th>Date</th><th>Status</th></tr></thead>
+                    <tbody>
+                        {% for leave in my_leaves %}
+                        <tr>
+                            <td>{{ leave.date }}</td>
+                            <td>
+                                {% if leave.approve == True %}<span class="badge bg-success">Approved</span>
+                                {% elif leave.approve == False %}<span class="badge bg-danger">Rejected</span>
+                                {% else %}<span class="badge bg-warning text-dark">Pending</span>{% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>

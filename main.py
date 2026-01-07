@@ -5,14 +5,12 @@ from fastapi.responses import RedirectResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
-# Fix for Passlib + Bcrypt 4.0.1+ compatibility in newer Python versions
 logging.getLogger('passlib').setLevel(logging.ERROR)
 
 import models
 from database import engine, get_db, SessionLocal
 from auth import create_access_token, get_current_user, pwd_context
 
-# Initialize Database
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
@@ -22,15 +20,13 @@ templates = Jinja2Templates(directory="templates")
 def startup():
     db = SessionLocal()
     try:
-        # Create Default Management Dept
         admin_dept = db.query(models.Department).filter(models.Department.name == "Management").first()
         if not admin_dept:
             admin_dept = models.Department(name="Management")
             db.add(admin_dept)
             db.commit()
             db.refresh(admin_dept)
-
-        # Create Default Admin User
+            
         admin_exists = db.query(models.Employee).filter(models.Employee.email == "admin@test.com").first()
         if not admin_exists:
             admin = models.Employee(

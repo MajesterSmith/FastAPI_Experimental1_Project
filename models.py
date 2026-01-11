@@ -1,6 +1,6 @@
 from database import Base
-from sqlalchemy import Column, Integer, String, Float, Date, ForeignKey, Boolean
-from datetime import date
+from sqlalchemy import Column, Integer, String, Float, Date, ForeignKey, Boolean, DateTime
+from datetime import date, datetime
 from sqlalchemy.orm import relationship
 
 class Department(Base):
@@ -39,3 +39,11 @@ class Leave(Base):
     approve = Column(Boolean, nullable=True)
     admin_id = Column(Integer, ForeignKey("employees.id"), nullable=True)
     employee = relationship("Employee", back_populates="leaves", foreign_keys=[emp_id])
+
+class Message(Base):
+    __tablename__ = "messages"
+    id = Column(Integer, primary_key=True, index=True)
+    sender_id = Column(Integer, ForeignKey("employees.id"))
+    receiver_id = Column(Integer, ForeignKey("employees.id"))
+    message = Column(String)
+    timestamp = Column(DateTime, default=datetime.utcnow)

@@ -62,4 +62,96 @@
         </div>
     </div>
 </div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-white py-3">
+                <h5 class="fw-bold m-0">Message Admin</h5>
+            </div>
+            <div class="card-body" style="height: 300px; overflow-y: auto;" id="messages">
+                <!-- Messages will be loaded here -->
+            </div>
+            <div class="card-footer">
+                <form id="messageForm" class="d-flex">
+                    <input type="text" id="messageInput" class="form-control me-2" placeholder="Type a message to admin..." required>
+                    <button type="submit" class="btn btn-primary">Send</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const userId = "{{ user.id }}";
+    const adminId = "{{ admin_id }}";
+    const ws = new WebSocket(`ws://${window.location.host}/ws/${userId}`);
+    const messagesDiv = document.getElementById('messages');
+    const messageForm = document.getElementById('messageForm');
+    const messageInput = document.getElementById('messageInput');
+
+    ws.onopen = function() {
+        console.log('WebSocket connected');
+    };
+
+    ws.onclose = function() {
+        console.log('WebSocket disconnected');
+    };
+
+    ws.onerror = function(error) {
+        console.error('WebSocket error:', error);
+    };
+
+    ws.onmessage = function(event) {
+        const message = document.createElement('div');
+        message.className = 'mb-2';
+        message.innerHTML = `<strong>${event.data}</strong>`;
+        messagesDiv.appendChild(message);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    };
+
+    messageForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const message = messageInput.value;
+        if (message) {
+            fetch('/send-message', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `receiver_id=${adminId}&message=${encodeURIComponent(message)}`
+            }).then(response => {
+                if (!response.ok) {
+                    console.error('Failed to send message');
+                } else {
+                    messageInput.value = '';
+                }
+            }).catch(error => {
+                console.error('Error sending message:', error);
+            });
+        }
+    });
+
+    // Load existing messages
+    fetch('/messages')
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                console.error('Error loading messages:', data.error);
+            } else {
+                data.messages.forEach(msg => {
+                    const message = document.createElement('div');
+                    message.className = 'mb-2';
+                    message.innerHTML = `<strong>${msg.sender_name}: ${msg.message}</strong>`;
+                    messagesDiv.appendChild(message);
+                });
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            }
+        }).catch(error => {
+            console.error('Error loading messages:', error);
+        });
+});
+</script>

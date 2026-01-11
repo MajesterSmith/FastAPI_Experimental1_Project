@@ -6,9 +6,9 @@ logging.getLogger('passlib').setLevel(logging.ERROR)
 
 import models
 from database import engine
-from routers import auth, dashboard, admin, employee
+from routers import auth, dashboard, admin, employee, messaging
 
-models.Base.metadata.create_all(bind=engine)
+# models.Base.metadata.create_all(bind=engine)  # Removed - using Alembic migrations now
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
@@ -45,3 +45,4 @@ app.include_router(auth.router)
 app.include_router(dashboard.router)
 app.include_router(admin.router)
 app.include_router(employee.router)
+app.include_router(messaging.router)

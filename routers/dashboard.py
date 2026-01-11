@@ -21,11 +21,14 @@ async def dashboard(request: Request, db: Session = Depends(get_db)):
             "employees": db.query(models.Employee).all(),
             "departments": db.query(models.Department).all(),
             "logs": db.query(models.Attendance).all(),
-            "pending_leaves": db.query(models.Leave).filter(models.Leave.approve == None).all()
+            "pending_leaves": db.query(models.Leave).filter(models.Leave.approve == None).all(),
+            "admin_id": user.id
         })
     
     marked = db.query(models.Attendance).filter(models.Attendance.emp_id == user.id, models.Attendance.date == date.today()).first()
+    admin = db.query(models.Employee).filter(models.Employee.role == "admin").first()
     return templates.TemplateResponse("employee_dash.html", {
         "request": request, "user": user, "marked": marked, "today": date.today(),
-        "my_leaves": db.query(models.Leave).filter(models.Leave.emp_id == user.id).all()
+        "my_leaves": db.query(models.Leave).filter(models.Leave.emp_id == user.id).all(),
+        "admin_id": admin.id if admin else 1
     })

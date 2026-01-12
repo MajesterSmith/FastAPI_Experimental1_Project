@@ -16,6 +16,7 @@ class Employee(Base):
     name = Column(String)
     email = Column(String, unique=True, index=True) 
     hashed_password = Column(String)
+    phone_number = Column(String(15), nullable=True)
     role = Column(String, default="employee")
     salary = Column(Float, default=0.0)
     dept_id = Column(Integer, ForeignKey("departments.id"))

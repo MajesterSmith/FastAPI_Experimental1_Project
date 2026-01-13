@@ -7,7 +7,7 @@ logging.getLogger('passlib').setLevel(logging.ERROR)
 
 import models
 from database import engine
-from routers import auth, dashboard, admin, employee, messaging
+from routers import auth, dashboard, admin, employee, messaging, notifications
 
 # models.Base.metadata.create_all(bind=engine)  # Removed - using Alembic migrations now
 
@@ -53,3 +53,4 @@ app.include_router(dashboard.router)
 app.include_router(admin.router)
 app.include_router(employee.router)
 app.include_router(messaging.router)
+app.include_router(notifications.router)

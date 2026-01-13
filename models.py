@@ -24,6 +24,7 @@ class Employee(Base):
     department = relationship("Department", back_populates="employees")
     attendance_logs = relationship("Attendance", back_populates="employee")
     leaves = relationship("Leave", back_populates="employee", foreign_keys="[Leave.emp_id]")
+    notifications = relationship("Notification", back_populates="user")
 
 class Attendance(Base):
     __tablename__ = "attendance"
@@ -48,3 +49,14 @@ class Message(Base):
     receiver_id = Column(Integer, ForeignKey("employees.id"))
     message = Column(String)
     timestamp = Column(DateTime, default=datetime.utcnow)
+
+class Notification(Base):
+    __tablename__ = "notifications"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("employees.id"))
+    title = Column(String)
+    message = Column(String)
+    is_read = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("Employee", back_populates="notifications")

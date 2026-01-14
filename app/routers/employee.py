@@ -2,9 +2,9 @@ from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 from datetime import date
-from database import get_db
-from auth import get_current_user, pwd_context
-import models
+from ..database import get_db
+from ..auth import get_current_user, pwd_context
+from .. import models
 
 router = APIRouter()
 

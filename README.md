@@ -4,6 +4,8 @@ A FastAPI application for managing employees, departments, attendance, and messa
 
 ## Setup
 
+### Local Development
+
 1. Install dependencies:
 ```bash
 pip install -r requirements.txt
@@ -13,6 +15,37 @@ pip install -r requirements.txt
 ```bash
 uvicorn main:app --reload
 ```
+
+### Docker Setup
+
+1. **Build and run with Docker Compose:**
+```bash
+docker-compose up --build
+```
+
+2. **Run database migrations in Docker:**
+```bash
+# Access the running app container
+docker-compose exec app alembic upgrade head
+```
+
+3. **Stop the containers:**
+```bash
+docker-compose down
+```
+
+4. **Stop and remove volumes (including database data):**
+```bash
+docker-compose down -v
+```
+
+**Access the application:**
+- API: http://localhost:8000
+- Database: localhost:5432 (PostgreSQL)
+
+**Default admin account:**
+- Email: admin@test.com
+- Password: admin123
 
 ## Database Migrations
 
@@ -48,10 +81,6 @@ The database has been initialized with the following tables:
 - attendance
 - leaves
 - messages
-
-Default admin account:
-- Email: admin@test.com
-- Password: admin123
 
 ## Features
 

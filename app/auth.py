@@ -3,8 +3,8 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 from fastapi import Request
 from sqlalchemy.orm import Session
-from models import Employee
-from config import settings
+from .models import Employee
+from .config import settings
 
 SECRET_KEY = settings.secret_key
 ALGORITHM = settings.algorithm

@@ -1,9 +1,9 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, Form, Request
 from sqlalchemy.orm import Session, joinedload
-from database import get_db
-from auth import get_current_user, pwd_context
+from ..database import get_db
+from ..auth import get_current_user, pwd_context
 from typing import Dict
-import models
+from .. import models
 
 router = APIRouter()
 

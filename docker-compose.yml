@@ -6,30 +6,9 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql://user:password@db:5432/employee_app
+      - DATABASE_URL=sqlite:///./employee_app.db
       - SECRET_KEY=EEEeNwdjOmiTzu75ghqMCGbVxsu-yA3QvFChNJDMDe0
-    depends_on:
-      db:
-        condition: service_healthy
     volumes:
-      - ./app:/app/app
-    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-
-  db:
-    image: postgres:15-alpine
-    environment:
-      - POSTGRES_DB=employee_app
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=password
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user -d employee_app"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-volumes:
-  postgres_data:
+      - .:/app
+      - /app/__pycache__
+    command: uvicorn app.app:app --host 0.0.0.0 --port 8000 --reload
